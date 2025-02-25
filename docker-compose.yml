@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: jalo
+    ports:
+      - 5440:5432
+    networks:
+      - "local-development"
+  db-mysql:
+      image: mysql:8
+      environment:
+        MYSQL_ROOT_PASSWORD: secret
+        MYSQL_DATABASE: jalo
+      ports:
+        - 3306:3306
+      networks:
+        - "local-development"
+  tests:
+    build:
+      dockerfile: deployment/Dockerfile.test
+    env_file:
+      - ./.envs/.env.base
+      - ./.envs/.env.test
+    ports:
+      - 9001:9000
+    networks:
+      - "local-development"
+    depends_on:
+      - db
+  app:
+    build:
+      dockerfile: deployment/Dockerfile.deploy
+    environment:
+      - ENVIRONMENT=docker
+    env_file:
+      - ./.envs/.env.docker
+    ports:
+      - 9001:9000
+    networks:
+      - "local-development"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "512m"
+networks:
+  local-development:
